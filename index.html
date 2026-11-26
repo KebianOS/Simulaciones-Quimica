@@ -21,6 +21,14 @@
       <span class="ico big">🍅🍊👁️</span>
       <strong>Propiedades organolépticas</strong><small>Grado 7 · Laboratorio virtual</small>
     </button>
+    <button class="tile" data-go="co2">
+      <span class="ico big">🎈🧪</span>
+      <strong>Estequiometría: producción de CO₂</strong><small>Grado 10 · Laboratorio virtual</small>
+    </button>
+    <button class="tile" data-go="gas">
+      <span class="ico big">🫁💨</span>
+      <strong>Los gases cumplen una función vital</strong><small>Grado 10 · Laboratorio virtual</small>
+    </button>
   </div>
   <p class="foot">Basado en las guías de Química de Olga Liliana Salinas Casallas · Química I, Grupo Editorial Educar</p>
 </div>
@@ -123,6 +131,58 @@
     </aside>
   </div>
   <nav class="bar"><button data-home>🏠 Inicio</button><span>Propiedades organolépticas</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
+</div>
+
+<!-- SIM 3 -->
+<div id="co2" class="sim" hidden>
+  <div class="stage">
+    <div class="main">
+      <div class="tabs"><button data-t="exp" class="on">Experimento</button><button data-t="calc">Cálculos</button><button data-t="res">Análisis</button></div>
+      <section class="scr" id="c-exp"></section>
+      <section class="scr" id="c-calc" hidden></section>
+      <section class="scr" id="c-res" hidden></section>
+    </div>
+    <aside class="panel">
+      <h3>Tópico generativo</h3>
+      <p class="small">¿Cómo podemos predecir la cantidad de un gas producido en una reacción química utilizando cálculos estequiométricos?</p>
+      <p class="small"><b>Situación problema:</b> al mezclar bicarbonato de sodio con vinagre hay efervescencia y se libera CO₂. ¿Es posible calcular antes cuánto gas se producirá?</p>
+      <details><summary>Materiales</summary><p class="small">Botella plástica pequeña (250–500 mL) · globo · embudo · vinagre blanco · bicarbonato de sodio · cuchara medidora · balanza de cocina · cinta métrica o regla · calculadora.</p></details>
+      <details><summary>Normas de seguridad</summary><p class="small">No ingerir los reactivos · trabajar en una superficie limpia · usar gafas si es posible · no dirigir el globo hacia el rostro · lavar las manos al finalizar.</p></details>
+      <hr>
+      <h3>Progreso</h3>
+      <div class="bar-prog"><i id="cprog"></i></div>
+      <p id="cpt" class="small"></p>
+      <hr>
+      <p class="warn">📸 Esta simulación sirve para practicar. La guía real pide hacer el montaje en casa y tomar fotografías de materiales, inicio, reacción, globo inflado y resultado final.</p>
+    </aside>
+  </div>
+  <nav class="bar"><button data-home>🏠 Inicio</button><span>Estequiometría del CO₂</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
+</div>
+
+<!-- SIM 4 -->
+<div id="gas" class="sim" hidden>
+  <div class="stage">
+    <div class="main">
+      <div class="tabs"><button data-t="bench" class="on">Laboratorio</button><button data-t="calc">Cálculos</button><button data-t="gra">Gráficas</button><button data-t="con">Conclusiones</button></div>
+      <section class="scr" id="g-bench"></section>
+      <section class="scr" id="g-calc" hidden></section>
+      <section class="scr" id="g-gra" hidden></section>
+      <section class="scr" id="g-con" hidden></section>
+    </div>
+    <aside class="panel">
+      <h3>Objetivos</h3>
+      <p class="small">1. Medir el aire que respiramos y el oxígeno que consumimos por minuto.<br>2. Determinar la cantidad de oxígeno a diferentes alturas.<br>3. Predecir comportamientos a partir de datos experimentales.</p>
+      <details><summary>Materiales</summary><p class="small">Ponchera de 2 L · vasija de 2 L · recipiente de 250 mL · bolsa plástica mediana sin perforaciones · termómetro · cronómetro.</p></details>
+      <details><summary>Procedimiento</summary><p class="small">Llena la vasija, ponla en la ponchera, exhala todo el aire en la bolsa, sumérgela y mide el agua desplazada con el recipiente de 250 mL. Anota T, presión y altura, y cuenta tus exhalaciones por minuto. Repite con 4 integrantes de tu familia.</p></details>
+      <hr>
+      <h3>Progreso</h3>
+      <div class="bar-prog"><i id="gprog"></i></div>
+      <p id="gpt" class="small"></p>
+      <hr>
+      <p class="warn">📸 La práctica real se envía con registro fotográfico o video. Aquí puedes ensayar y calcular antes.</p>
+    </aside>
+  </div>
+  <nav class="bar"><button data-home>🏠 Inicio</button><span>Los gases cumplen una función vital</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
 </div>
 
 <div id="informe" aria-hidden="true"></div>

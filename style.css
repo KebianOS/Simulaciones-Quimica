@@ -142,3 +142,22 @@ details summary{cursor:pointer;font-weight:600;margin:.3rem 0}
  #informe{position:static;width:auto}
  .hoja{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* Laboratorios de Grado 10 */
+.two{display:grid;grid-template-columns:minmax(240px,330px) 1fr;gap:1rem;align-items:start}
+.two svg{width:100%;border:2px solid #9ab;border-radius:10px;background:#f1f8fd}
+.rg{display:block;margin:.5rem 0;font-weight:600}.rg input{width:100%}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;margin:.4rem 0 .8rem}
+.chip{background:#fff;border:2px solid var(--nav);border-radius:20px;padding:.3rem .8rem;font-weight:600}
+.chip.on{background:var(--nav);color:#fff}
+.stp{background:#fff;border:2px solid #9ab;border-radius:8px;padding:.5rem .7rem;margin:.5rem 0}
+.rs.ok{color:var(--ok);font-weight:700}.rs.no{color:var(--bad);font-weight:700}
+.sol{font-size:.9rem;background:#e8f4ff;border-left:4px solid var(--nav);padding:.4rem;margin-top:.3rem}
+.chart{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem}
+.chart svg{width:100%;height:auto}
+.bub{opacity:0}.go .bub{animation:rise 1.1s infinite;animation-delay:var(--d)}
+@keyframes rise{0%{opacity:.9;transform:translateY(0)}100%{opacity:0;transform:translateY(-34px)}}
+.main h3{margin:1rem 0 .4rem;font-size:1.1rem}
+select{font:inherit;padding:.3rem;border:1px solid #99a;border-radius:6px}
+.hoja svg{width:11cm;height:auto;display:block;margin:.2cm auto}
+@media(max-width:800px){.two{grid-template-columns:1fr}}

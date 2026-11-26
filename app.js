@@ -3,10 +3,10 @@ const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1
 const store={get(k){try{return localStorage.getItem(k)}catch(_){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(_){}},del(k){try{localStorage.removeItem(k)}catch(_){}}};
 
 /* Navegación */
-function show(id){["home","nom","lab"].forEach(x=>$("#"+x).hidden=x!=id);scrollTo(0,0)}
+function show(id){["home","nom","lab","co2","gas"].forEach(x=>$("#"+x).hidden=x!=id);scrollTo(0,0)}
 $$("[data-go]").forEach(b=>b.onclick=()=>show(b.dataset.go));
 $$("[data-home]").forEach(b=>b.onclick=()=>show("home"));
-$$("[data-reset]").forEach(b=>b.onclick=()=>b.closest("#nom")?nomReset():labReset());
+$$("[data-reset]").forEach(b=>b.onclick=()=>b.closest("#nom")?nomReset():b.closest("#co2")?co2Reset():b.closest("#gas")?gasReset():labReset());
 
 /* ===== SIM 1: Nomenclatura ===== */
 const C=[["Na","+1","sodio"],["K","+1","potasio"],["Li","+1","litio"],["Ag","+1","plata"],["NH4","+1","amonio"],["Mg","+2","magnesio"],["Ca","+2","calcio"],["Ba","+2","bario"],["Zn","+2","zinc"],["Al","+3","aluminio"],
@@ -196,3 +196,263 @@ cards();
 
 /* Correo */
 $("#correo").href="mailto:olga.salinas@ielosquindos.edu.co?subject="+encodeURIComponent("Informe laboratorio propiedades organolépticas");
+
+/* ===== Utilidades compartidas de los laboratorios de Grado 10 ===== */
+const esc=s=>String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const atmAlt=h=>Math.pow(1-2.25577e-5*h,5.25588);
+const num=s=>parseFloat(String(s).replace(",","."));
+const f2=(x,d=2)=>(+x).toLocaleString("es-CO",{minimumFractionDigits:d,maximumFractionDigits:d});
+const COL=["#1d4ed8","#c2185b","#2e9e5b","#f5a524","#7b3fa0","#00897b"];
+const MAIL="olga.salinas@ielosquindos.edu.co";
+const LB={
+  tabs(root,pre,cb){const bs=$$("#"+root+" .tabs button");bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.classList.toggle("on",x==b));$$("#"+root+" .scr").forEach(s=>s.hidden=s.id!=pre+b.dataset.t);cb&&cb(b.dataset.t)})},
+  ident:p=>`<div class="ident"><label>Nombre <input id="${p}n"></label><label>Grado <input id="${p}g" size="8" placeholder="Ej: 10 A"></label><label>Fecha <input id="${p}f" type="date"></label></div>`,
+  qs:(p,a,s=0)=>a.map((q,i)=>`<div class="q2"><label for="${p}q${i+s}">${q}</label><textarea id="${p}q${i+s}"></textarea></div>`).join(""),
+  keep(p,ids){ids.forEach(id=>{const e=document.getElementById(id);if(!e)return;const v=store.get(p+":"+id);if(v)e.value=v;e.addEventListener("input",()=>store.set(p+":"+id,e.value))})},
+  clear(p,ids){ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value="";store.del(p+":"+id)})},
+  qa:sel=>$$(sel+" .q2").map(q=>[q.querySelector("label").textContent,q.querySelector("textarea").value]),
+  print(p,build){["n","g"].forEach(k=>{const e=$("#"+p+k);if(!e.value.trim()){const v=prompt(k=="n"?"¿Cuál es tu nombre para la portada?":"¿Cuál es tu grado para la portada? Ej: 10 A");if(v){e.value=v;store.set(p+":"+p+k,v)}}});build();setTimeout(()=>print(),300)},
+  report(p,titulo,sub,paginas){
+    const inf=$("#informe");inf.innerHTML="";
+    const pag=()=>{const d=document.createElement("div");d.className="hoja";inf.appendChild(d);return d};
+    const g=k=>$("#"+p+k).value.trim()||"______________________";
+    const f=$("#"+p+"f").value?$("#"+p+"f").value.split("-").reverse().join("/"):new Date().toLocaleDateString("es-CO");
+    pag().innerHTML=`<div class="portada"><p class="inst">INSTITUCIÓN EDUCATIVA LOS QUINDOS</p><h1>${titulo}</h1><p class="sub">${sub}</p><div class="datos"><p><b>Estudiante:</b> ${esc(g("n"))}</p><p><b>Grado:</b> ${esc(g("g"))}</p><p><b>Fecha:</b> ${f}</p><p><b>Docente:</b> Olga Liliana Salinas Casallas</p></div></div>`;
+    paginas.forEach(P=>{
+      if(P.html){pag().innerHTML=`<h2>${P.h}</h2>`+P.html;return}
+      let pg=pag();pg.innerHTML=`<h2>${P.h}</h2>`;
+      P.qa.forEach(([q,a])=>{
+        const b=document.createElement("div");b.className="qa";b.innerHTML=`<b>${esc(q)}</b><div class="ans"></div>`;
+        const an=b.lastChild;an.textContent=a;pg.appendChild(b);
+        if(pg.scrollHeight>pg.clientHeight+1){pg.removeChild(b);pg=pag();pg.appendChild(b);let fs=11;while(pg.scrollHeight>pg.clientHeight+1&&fs>6){fs-=.5;an.style.fontSize=fs+"pt"}}
+      });
+    });
+  }
+};
+function chartSVG({t,xl,yl,bars,series,xmax}){
+  const W=420,H=270,L=48,B=44,T=42,R=12,iw=W-L-R,ih=H-T-B;
+  const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v))),m=v/e;return(m<=1?1:m<=2?2:m<=5?5:10)*e};
+  const ymax=nice(Math.max(bars?Math.max(...bars.map(b=>b[1])):Math.max(...series.flatMap(s=>s.p.map(q=>q[1]))),.001));
+  const Y=v=>T+ih-v/ymax*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t}"><rect width="${W}" height="${H}" fill="#fff" stroke="#9ab"/><text x="${W/2}" y="17" text-anchor="middle" font-weight="700" font-size="13">${t}</text>`;
+  for(let i=0;i<=4;i++){const v=ymax*i/4;s+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#ddd"/><text x="${L-4}" y="${Y(v)+4}" text-anchor="end" font-size="10">${+v.toPrecision(3)}</text>`}
+  s+=`<line x1="${L}" x2="${L}" y1="${T}" y2="${T+ih}" stroke="#333"/><line x1="${L}" x2="${W-R}" y1="${T+ih}" y2="${T+ih}" stroke="#333"/><text x="${L+iw/2}" y="${H-6}" text-anchor="middle" font-size="11">${xl}</text><text transform="translate(12 ${T+ih/2}) rotate(-90)" text-anchor="middle" font-size="11">${yl}</text>`;
+  if(bars){const w=iw/bars.length;bars.forEach((b,i)=>{const x=L+i*w+w*.18;s+=`<rect x="${x}" y="${Y(b[1])}" width="${w*.64}" height="${T+ih-Y(b[1])}" fill="${COL[i%6]}"/><text x="${x+w*.32}" y="${Y(b[1])-4}" text-anchor="middle" font-size="10">${f2(b[1])}</text><text x="${x+w*.32}" y="${T+ih+14}" text-anchor="middle" font-size="10">${esc(b[0])}</text>`})}
+  else{const X=v=>L+v/xmax*iw;for(let i=0;i<=xmax;i++)s+=`<text x="${X(i)}" y="${T+ih+14}" text-anchor="middle" font-size="10">${i}</text>`;
+    series.forEach((q,k)=>{s+=`<polyline fill="none" stroke="${q.c}" stroke-width="2.5" points="${q.p.map(a=>X(a[0])+","+Y(a[1])).join(" ")}"/><rect x="${L+k*76}" y="26" width="10" height="10" fill="${q.c}"/><text x="${L+k*76+13}" y="35" font-size="10">${esc(q.n)}</text>`})}
+  return s+"</svg>";
+}
+
+/* ===== SIM 3: Estequiometría del CO2 (Grado 10) ===== */
+(function(){
+const R=.08206,MB=84.01,MC=44.01,MA=60.05,TK=297,PA=atmAlt(1480);
+const S={m:5,v:100,run:JSON.parse(store.get("co2:run")||"null")},ok=new Set();
+const calc=(m,v)=>{const nB=m/MB,nA=v*.05/MA,n=Math.min(nB,nA);return{nB,nA,n,lim:nB<=nA?"el bicarbonato":"el ácido acético del vinagre",V:n*R*TK/PA}};
+const diam=V=>2*Math.cbrt(3*V*1000/(4*Math.PI));
+const M=()=>S.run?S.run.m:S.m;
+const QA=["1. ¿Por qué se produjo el dióxido de carbono?","2. ¿Qué evidencia demuestra que ocurrió una reacción química?","3. ¿Por qué el globo se infló?","4. ¿Cree que todo el bicarbonato reaccionó? ¿Por qué?","5. ¿Qué ocurriría si se duplicara la cantidad de bicarbonato?","6. ¿Qué variable pudo afectar los resultados?"];
+const EPC=["Rutina de pensamiento · Antes pensaba…","Ahora comprendo…","Todavía me pregunto…","Conexión con la vida cotidiana…"];
+const EX=["Investigue un ejemplo donde se produzca dióxido de carbono mediante una reacción química (panadería, bebidas gaseosas, extintores, industria, laboratorio)."];
+const CON=["Conclusión 1","Conclusión 2","Conclusión 3"];
+const NQ=QA.length+EPC.length+EX.length+CON.length;
+const IDS=["co2p0","co2p1","co2p2","co2e0","co2e1","co2n","co2g","co2f","co2s1","co2s3","co2s4","co2s5","co2s6",...Array.from({length:NQ},(_,i)=>"co2q"+i)];
+const STP=[
+ ["co2s3","Paso 3. Moles de NaHCO₃ (M = 84,01 g/mol): n = masa ÷ M","mol",m=>m/MB,m=>`n = ${f2(m)} g ÷ 84,01 g/mol = ${f2(m/MB,4)} mol`],
+ ["co2s4","Paso 4. Moles de CO₂ producidos (relación 1 : 1)","mol",m=>m/MB,m=>`1 mol NaHCO₃ → 1 mol CO₂, entonces n(CO₂) = ${f2(m/MB,4)} mol`],
+ ["co2s5","Paso 5. Masa de CO₂ (M = 44,01 g/mol): m = n × M","g",m=>m/MB*MC,m=>`m = ${f2(m/MB,4)} mol × 44,01 g/mol = ${f2(m/MB*MC)} g`],
+ ["co2s6","Paso 6 (extra). Volumen de CO₂ a 24 °C y "+f2(PA)+" atm (Armenia): V = nRT ÷ P","L",m=>m/MB*R*TK/PA,m=>`V = ${f2(m/MB,4)} × 0,08206 × 297 ÷ ${f2(PA)} = ${f2(m/MB*R*TK/PA)} L`]];
+
+$("#c-exp").innerHTML=`<p class="hint">Partes A–C: prepara el montaje, haz tu predicción y mezcla.</p>
+<div class="two"><svg id="cSvg" viewBox="0 0 300 290" role="img" aria-label="Botella con vinagre y globo con bicarbonato"></svg>
+<div><label class="rg">Bicarbonato de sodio: <b id="cmv"></b><input type="range" id="cm" min="1" max="15" step="0.5" value="5"></label>
+<label class="rg">Vinagre blanco (≈5 % de ácido acético): <b id="cvv"></b><input type="range" id="cv" min="50" max="200" step="10" value="100"></label>
+<h3>Parte B · Predicción</h3>
+<div class="q2"><label for="co2p0">¿Qué cree que ocurrirá al mezclar el bicarbonato con el vinagre?</label><textarea id="co2p0"></textarea></div>
+<div class="q2"><label for="co2p1">¿El globo se inflará?</label><select id="co2p1"><option value="">—</option><option>Sí</option><option>No</option></select> <label for="co2p2">¿Por qué?</label><textarea id="co2p2"></textarea></div>
+<button class="btn2" id="cgo">⚗️ Mezclar</button><button class="btn2" id="crs">↺ Preparar de nuevo</button></div></div>
+<div id="cobs" class="scroll"></div>`;
+$("#c-calc").innerHTML=`<p class="hint">Parte D · Cálculos estequiométricos. Escribe tu resultado y pulsa Comprobar.</p>
+<div class="stp"><b>Paso 1.</b> Ecuación balanceada: NaHCO<sub>3</sub> + CH<sub>3</sub>COOH → CH<sub>3</sub>COONa + H<sub>2</sub>O + CO<sub>2</sub> (todos los coeficientes son 1). Relación molar NaHCO₃ : CO₂ = <select id="co2s1"><option value="">—</option><option>1 : 1</option><option>1 : 2</option><option>2 : 1</option></select> <button class="btn2" data-c="s1">Comprobar</button> <span class="rs"></span></div>
+<div class="stp"><b>Paso 2.</b> Cantidad de bicarbonato utilizada: <b id="cm2"></b> g (la que elegiste en el experimento)</div>`+
+STP.map(s=>`<div class="stp"><label for="${s[0]}"><b>${s[1]}</b></label><br><input id="${s[0]}" size="9" inputmode="decimal"> ${s[2]} <button class="btn2" data-c="${s[0]}">Comprobar</button> <button class="btn2" data-s="${s[0]}">Ver solución</button> <span class="rs"></span><div class="sol" hidden></div></div>`).join("");
+$("#c-res").innerHTML=LB.ident("co2")+`<h3>Comparación de resultados</h3><div id="ccmp" class="scroll"></div>
+<h3>Parte E · Comparación experimental</h3><p id="cdi"></p>
+<div class="q2"><label for="co2e0">¿Considera que la cantidad de gas fue suficiente para inflar el globo completamente?</label><select id="co2e0"><option value="">—</option><option>Sí</option><option>No</option></select> <label for="co2e1">Explique.</label><textarea id="co2e1"></textarea></div>
+<h3>Análisis de resultados</h3>`+LB.qs("co2",QA)+`<h3>Rutina de pensamiento (EpC)</h3>`+LB.qs("co2",EPC,QA.length)+`<h3>Conexión con la vida cotidiana</h3>`+LB.qs("co2",EX,QA.length+EPC.length)+`<h3>Conclusiones</h3>`+LB.qs("co2",CON,QA.length+EPC.length+1)+
+`<p class="note">Evidencias para entregar: guía diligenciada, fotografías del procedimiento real, cálculos, comparación teórico/experimental y conclusiones, al correo ${MAIL}.</p><div class="noprint"><button class="btn2" id="cpr">🖨️ Imprimir informe / guardar PDF</button> <a class="btn2" id="cmail" href="mailto:${MAIL}?subject=${encodeURIComponent("Laboratorio estequiometría CO2")}">✉️ Abrir correo para la profesora</a></div>`;
+LB.keep("co2",IDS);
+
+const bottle=()=>{
+  const h=Math.round(48*S.v/200),run=!!S.run,s=run?Math.min(2,Math.max(.25,diam(S.run.Vexp)/12)):.25;
+  return`<rect width="300" height="290" fill="#f1f8fd"/>
+<g id="cBal" style="transform-origin:150px 178px;transform:scale(${s})"><circle cx="150" cy="138" r="40" fill="#e0407a" opacity=".88"/><ellipse cx="136" cy="122" rx="8" ry="12" fill="#fff" opacity=".4"/><rect x="143" y="172" width="14" height="10" fill="#e0407a"/></g>
+<rect x="107" y="${263-h}" width="86" height="${h}" rx="4" fill="#bfe3f5"/>
+<g class="bub" style="--d:0s"><circle cx="125" cy="245" r="4" fill="#fff" stroke="#7ab"/></g><g class="bub" style="--d:.3s"><circle cx="150" cy="240" r="3" fill="#fff" stroke="#7ab"/></g><g class="bub" style="--d:.6s"><circle cx="172" cy="248" r="4" fill="#fff" stroke="#7ab"/></g><g class="bub" style="--d:.9s"><circle cx="140" cy="252" r="3" fill="#fff" stroke="#7ab"/></g>
+<path d="M138 178h24v20l33 14v43a10 10 0 0 1-10 10h-70a10 10 0 0 1-10-10v-43l33-14z" fill="none" stroke="#456" stroke-width="3"/>
+<text x="150" y="283" text-anchor="middle" font-size="11" fill="#345">${f2(S.v,0)} mL de vinagre · ${f2(S.m,1)} g de NaHCO₃ en el globo</text>`;
+};
+const draw=()=>{$("#cSvg").innerHTML=bottle();$("#cmv").textContent=f2(S.m,1)+" g (≈ "+f2(S.m/5,1)+" cucharadita)";$("#cvv").textContent=S.v+" mL"};
+function lock(){$("#cm").disabled=$("#cv").disabled=!!S.run;$("#cgo").disabled=!!S.run}
+function obs(){
+  const r=S.run;if(!r){$("#cobs").innerHTML="";return}
+  const c=calc(r.m,r.v),d=diam(r.Vexp);
+  $("#cobs").innerHTML=`<h3>Observaciones (Parte C)</h3><table><tr><th>Observación</th><th>Descripción</th></tr>
+<tr><td>Color inicial</td><td>Vinagre incoloro y bicarbonato blanco en polvo</td></tr><tr><td>Formación de burbujas</td><td>Abundantes; la efervescencia comenzó de inmediato</td></tr>
+<tr><td>Cambio de temperatura</td><td>Disminuyó ≈ ${f2(r.dT,1)} °C (la botella se sintió más fría)</td></tr><tr><td>Tiempo aproximado de reacción</td><td>${r.t} s</td></tr>
+<tr><td>Tamaño del globo</td><td>Diámetro ≈ ${f2(d,1)} cm</td></tr><tr><td>Otras observaciones</td><td>${c.lim=="el bicarbonato"?"Sobró vinagre: el bicarbonato se acabó primero.":"Sobró bicarbonato sin disolver: el vinagre se acabó primero."}</td></tr></table>`;
+}
+$("#cm").oninput=e=>{S.m=+e.target.value;draw()};
+$("#cv").oninput=e=>{S.v=+e.target.value;draw()};
+$("#cgo").onclick=()=>{
+  if(S.run)return;const c=calc(S.m,S.v),eff=.8+Math.random()*.12;
+  S.run={m:S.m,v:S.v,eff,t:Math.round(20+S.m*5+Math.random()*10),dT:+(.6+c.n*12).toFixed(1),Vexp:c.V*eff};
+  store.set("co2:run",JSON.stringify(S.run));
+  const s=Math.min(2,Math.max(.25,diam(S.run.Vexp)/12)),b=$("#cBal");
+  b.style.transition="transform 3s ease-out";$("#cSvg").classList.add("go");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>b.style.transform=`scale(${s})`));
+  setTimeout(()=>$("#cSvg").classList.remove("go"),3000);
+  lock();obs();prog();
+};
+$("#crs").onclick=()=>{S.run=null;store.del("co2:run");lock();draw();obs();prog()};
+
+$("#c-calc").onclick=e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.c){
+    const id=b.dataset.c,rs=b.parentElement.querySelector(".rs");let good;
+    if(id=="s1")good=$("#co2s1").value=="1 : 1";
+    else{const s=STP.find(x=>x[0]==id),v=num($("#"+id).value),x=s[3](M());good=!isNaN(v)&&Math.abs(v-x)<=Math.max(x*.03,.0005)}
+    rs.textContent=good?"✓ ¡Correcto!":"✗ Revisa el cálculo";rs.className="rs "+(good?"ok":"no");good?ok.add(id):ok.delete(id);prog();
+  }else if(b.dataset.s){const s=STP.find(x=>x[0]==b.dataset.s),d=b.parentElement.querySelector(".sol");d.textContent=s[4](M());d.hidden=!d.hidden}
+};
+function cmp(){
+  const m=M(),nB=m/MB,r=S.run;
+  const row=(a,t,x)=>`<tr><td>${a}</td><td>${t}</td><td>${r?x:"—"}</td></tr>`;
+  const nE=r?r.Vexp*PA/(R*TK):0;
+  $("#ccmp").innerHTML=`<table><tr><th></th><th>Resultado teórico (desde el bicarbonato)</th><th>Resultado experimental (globo)</th></tr>
+${row("Moles de CO₂",f2(nB,4),f2(nE,4))}${row("Masa de CO₂ (g)",f2(nB*MC),f2(nE*MC))}${row("Volumen de gas (L)",f2(nB*R*TK/PA),r?f2(r.Vexp):"")}${row("Diámetro del globo (cm)",f2(diam(nB*R*TK/PA),1),r?f2(diam(r.Vexp),1):"")}</table>`
+  +(r?`<p class="small">Rendimiento aparente: ${f2(r.Vexp/(nB*R*TK/PA)*100,0)} %. Reactivo limitante: ${calc(r.m,r.v).lim}.</p>`:`<p class="hint">Realiza el experimento para ver el resultado experimental.</p>`);
+  $("#cdi").innerHTML=r?`Diámetro aproximado del globo: <b>${f2(diam(r.Vexp),1)} cm</b>`:"Diámetro aproximado del globo: (realiza el experimento)";
+  $("#cm2").textContent=f2(m,1);
+}
+function prog(){const n=(S.run?1:0)+["s1","co2s3","co2s4","co2s5","co2s6"].filter(x=>ok.has(x)).length;$("#cprog").style.width=n/6*100+"%";$("#cpt").textContent=`${n} de 6 pasos${n==6?" · ¡Listo! Completa el análisis.":""}`}
+LB.tabs("co2","c-",t=>{if(t!="exp")cmp()});
+function calcTxt(){const m=M();return`<table><tr><th>Paso</th><th>Tu resultado</th><th>Valor esperado</th></tr><tr><td>2. Masa de NaHCO₃</td><td>${f2(m,1)} g</td><td></td></tr>`+STP.map(s=>`<tr><td>${esc(s[1].split(".")[0]+". "+s[1].split(". ")[1].split(":")[0].split("(")[0])}</td><td>${esc($("#"+s[0]).value||"—")} ${s[2]}</td><td>${f2(s[3](m),4)} ${s[2]}</td></tr>`).join("")+"</table>"}
+$("#cpr").onclick=()=>LB.print("co2",()=>{
+  cmp();const r=S.run;
+  LB.report("co2","Estequiometría: producción de dióxido de carbono","Química grado 10 · Proyecto Síntesis",[
+   {h:"Predicción, observaciones y cálculos",html:`<p><b>Predicción:</b> ${esc($("#co2p0").value||"—")}</p><p><b>¿Se inflará el globo?</b> ${esc($("#co2p1").value||"—")}. ${esc($("#co2p2").value)}</p><p><b>Montaje:</b> ${r?`${f2(r.m,1)} g de bicarbonato y ${r.v} mL de vinagre`:"sin realizar"}</p>`+($("#cobs").innerHTML||"")+`<p><b>Ecuación:</b> NaHCO₃ + CH₃COOH → CH₃COONa + H₂O + CO₂</p>`+calcTxt()},
+   {h:"Comparación de resultados",html:$("#ccmp").innerHTML+`<p>${$("#cdi").innerHTML}</p><p><b>¿Gas suficiente para inflar el globo?</b> ${esc($("#co2e0").value||"—")}. ${esc($("#co2e1").value)}</p><p class="nota">Las fotografías del procedimiento real se envían por separado al correo ${MAIL}.</p>`},
+   {h:"Análisis y conclusiones",qa:LB.qa("#c-res")}]);
+});
+window.co2Reset=()=>{
+  if(!confirm("¿Borrar el experimento, los cálculos y las respuestas de este laboratorio?"))return;
+  S.run=null;S.m=5;S.v=100;store.del("co2:run");ok.clear();LB.clear("co2",IDS);
+  $("#cm").value=5;$("#cv").value=100;$$("#c-calc .rs").forEach(x=>x.textContent="");$$("#c-calc .sol").forEach(x=>x.hidden=true);lock();draw();obs();cmp();prog();
+};
+if(S.run){S.m=S.run.m;S.v=S.run.v;$("#cm").value=S.m;$("#cv").value=S.v}
+lock();draw();obs();cmp();prog();
+})();
+
+/* ===== SIM 4: Los gases cumplen una función vital (Grado 10) ===== */
+(function(){
+const R=.082,PR=[["Tú",1.6,16],["Mamá",1.3,18],["Papá",1.9,14],["Hermano/a",1.5,17],["Abuelo/a",1.05,19]];
+const CIT=[["Armenia (Quindío)",1480],["Bogotá",2640],["Medellín",1495],["Cali",1018],["Barranquilla",18],["Nivel del mar",0]];
+const S=JSON.parse(store.get("gas:st")||"null")||{alt:1480,T:24,d:PR.map(p=>({n:p[0],V:null,r:null}))};
+const CQ=["Conclusión 1","Conclusión 2","Conclusión 3"],IDS=["gasn","gasg","gasf",...CQ.map((_,i)=>"gasq"+i)];
+const STEPS=["💧 1 · Llenar la vasija y ponerla en la ponchera","🫁 2 · Inspirar y exhalar todo el aire en la bolsa","🪣 3 · Sumergir la bolsa en la vasija","🥛 4 · Medir el agua con el recipiente de 250 mL","⏱️ 5 · Contar las exhalaciones en 1 minuto"];
+let sel=0,step=0,busy=false,tmp=null,ea=S.alt;
+const save=()=>store.set("gas:st",JSON.stringify(S));
+const Pat=()=>atmAlt(S.alt),TK=()=>S.T+273.15,done=d=>d.V!=null&&d.r!=null;
+const gen=i=>Math.max(.5,Math.round((PR[i][1]+(Math.random()-.5)*.16)*20)/20);
+
+$("#g-bench").innerHTML=`<p class="hint">Elige quién participa y sigue el procedimiento paso a paso (repítelo con cada integrante).</p>
+<div class="chips" id="gChips"></div>
+<div class="two"><svg id="gSvg" viewBox="0 0 320 220" role="img" aria-label="Ponchera, vasija con agua y bolsa de aire"></svg>
+<div><div class="env"><label>Ciudad <select id="gCity">${CIT.map(c=>`<option value="${c[1]}">${c[0]} · ${c[1]} m</option>`).join("")}</select></label>
+<label class="rg">Temperatura ambiente: <b id="gTv"></b><input type="range" id="gT" min="10" max="38" value="${S.T}"></label><p id="gP" class="small"></p></div>
+<button class="btn2" id="gNext"></button><div id="gLog" class="bubble"></div></div></div>`;
+$("#g-calc").innerHTML=`<div id="gcal"></div>`;
+$("#g-gra").innerHTML=`<div id="gch"></div>`;
+$("#g-con").innerHTML=LB.ident("gas")+`<h3>Conclusiones</h3>`+LB.qs("gas",CQ)+`<p class="note">Envía las respuestas y el registro fotográfico o video de tu práctica real a ${MAIL}.</p><div class="noprint"><button class="btn2" id="gpr">🖨️ Imprimir informe / guardar PDF</button> <a class="btn2" href="mailto:${MAIL}?subject=${encodeURIComponent("Laboratorio los gases cumplen una función vital")}">✉️ Abrir correo para la profesora</a></div>`;
+LB.keep("gas",IDS);
+$("#gCity").value=CIT.some(c=>c[1]==S.alt)?S.alt:1480;
+
+function env(){$("#gTv").textContent=S.T+" °C";$("#gP").textContent=`Altura ${S.alt} m · Presión ≈ ${f2(Pat())} atm · T = ${f2(TK(),1)} K`}
+function draw(anim){
+  const d=S.d[sel],V=tmp??d.V??0,k=Math.min(1,V/2.2),rx=14+V*14,sub=step>=3;
+  $("#gSvg").innerHTML=`<rect width="320" height="220" fill="#f1f8fd"/><rect x="10" y="120" width="300" height="92" rx="10" fill="#fff" stroke="#567" stroke-width="3"/>
+<rect id="gDis" x="14" y="128" width="292" height="80" fill="#6bb8e8" opacity=".75" style="transform-origin:0 208px;transition:transform 1.5s;transform:scaleY(${sub&&!anim?k:0})"/>
+<rect x="110" y="40" width="100" height="168" rx="6" fill="${step>=1?"#8ccaf0":"none"}" fill-opacity=".85" stroke="#345" stroke-width="3"/>
+${step>=2?`<g id="gBag" style="transition:transform 1.5s;transform:translate(160px,${sub&&!anim?95:26}px)"><ellipse rx="${rx}" ry="${rx*.8}" fill="#fff" stroke="#889" stroke-width="2" opacity=".92"/><circle cy="${-rx*.8-4}" r="4" fill="#889"/></g>`:""}
+${step>=4?`<rect x="250" y="20" width="44" height="52" rx="4" fill="#fff" stroke="#345" stroke-width="2"/><text x="272" y="50" text-anchor="middle" font-size="11">250</text><text x="272" y="63" text-anchor="middle" font-size="9">mL</text>`:""}`;
+  if(anim)setTimeout(()=>{const a=$("#gDis"),b=$("#gBag");if(a)a.style.transform=`scaleY(${k})`;if(b)b.style.transform="translate(160px,95px)"},40);
+}
+function log(){
+  const d=S.d[sel],L=["Elige un integrante y empieza con el paso 1.","La vasija está llena de agua dentro de la ponchera.","Exhalaste todo el aire en la bolsa y la amarraste.","El agua desplazada pasó a la ponchera.","","Datos guardados."][step];
+  let t=L;if(step==4){const c=Math.floor(d.V/.25+1e-9);t=`Volumen desplazado = volumen de aire exhalado: <b>${f2(d.V)} L</b> (${c} recipientes de 250 mL y ${Math.round((d.V-c*.25)*1000)} mL).`}
+  if(step==5)t=`<b>${esc(d.n)}</b>: ${f2(d.V)} L por exhalación y <b>${d.r}</b> exhalaciones por minuto. ¡Datos guardados!`;
+  $("#gLog").innerHTML=t;
+  $("#gNext").textContent=step<5?STEPS[step]:"✓ Integrante completo";$("#gNext").disabled=step>=5||busy;
+  $("#gChips").innerHTML=S.d.map((x,i)=>`<button class="chip${i==sel?" on":""}" data-i="${i}">${done(x)?"✓ ":""}${esc(x.n)}</button>`).join("")+`<button class="chip" data-ren="1" title="Cambiar nombre">✏️</button>`;
+  const n=S.d.filter(done).length;$("#gprog").style.width=n/5*100+"%";$("#gpt").textContent=`${n} de 5 integrantes medidos`+(n==5?" · ¡Revisa Cálculos y Gráficas!":"");
+}
+$("#gChips").onclick=e=>{
+  const b=e.target.closest("button");if(!b||busy)return;
+  if(b.dataset.ren){const v=prompt("Nombre del integrante seleccionado:",S.d[sel].n);if(v&&v.trim()){S.d[sel].n=v.trim().slice(0,14);save();log()}return}
+  sel=+b.dataset.i;const d=S.d[sel];step=done(d)?5:d.V!=null?4:0;tmp=null;draw();log();
+};
+$("#gNext").onclick=()=>{
+  if(busy||step>=5)return;const d=S.d[sel],i=step;
+  if(i==1)tmp=gen(sel);
+  if(i==3){d.V=tmp;tmp=null;save()}
+  if(i==4){busy=true;let c=0;const r=PR[sel][2]+Math.round(Math.random()*2-1);log();
+    const iv=setInterval(()=>{c++;$("#gLog").innerHTML=`⏱️ Contando… <b>${c}</b> 🫁`;if(c>=r){clearInterval(iv);d.r=r;save();busy=false;step=5;log();draw()}},140);return}
+  step++;draw(i==2);log();
+};
+$("#gCity").onchange=e=>{S.alt=+e.target.value;save();env()};
+$("#gT").oninput=e=>{S.T=+e.target.value;save();env()};
+
+function tbl(){
+  const P=Pat(),T=TK(),ds=S.d.filter(done);
+  if(!ds.length)return`<p class="hint">Aún no hay datos: mide al menos un integrante en la pestaña Laboratorio.</p>`;
+  return`<table><tr><th>Integrante</th><th>V aire (L)</th><th>n aire (mol) = PV/RT</th><th>Exhalaciones/min</th><th>O₂ por minuto (L)</th><th>O₂ por hora (L)</th></tr>`+
+  ds.map(d=>`<tr><td>${esc(d.n)}</td><td>${f2(d.V)}</td><td>${f2(P*d.V/(R*T),4)}</td><td>${d.r}</td><td>${f2(d.V*d.r*.2)}</td><td>${f2(d.V*d.r*.2*60,1)}</td></tr>`).join("")+"</table>"+
+  `<p class="small">Ejemplo con ${esc(ds[0].n)}: n = (${f2(P)} atm × ${f2(ds[0].V)} L) ÷ (0,082 × ${f2(T,1)} K) = ${f2(P*ds[0].V/(R*T),4)} mol. O₂ por minuto = ${f2(ds[0].V)} L × ${ds[0].r} × 0,20 = ${f2(ds[0].V*ds[0].r*.2)} L.</p>`;
+}
+const q3=()=>{const Vm=22.4*308.15/273.15,n=1/Vm;return`<div class="stp"><b>Pregunta 3 · O₂ en 1 L de aire al nivel del mar (1 atm, 35 °C)</b><br>1 mol ocupa 22,4 L a 0 °C. A 35 °C (308,15 K): V = 22,4 × 308,15 ÷ 273,15 = ${f2(Vm)} L/mol.<br>n(aire) = 1 L ÷ ${f2(Vm)} L/mol = ${f2(n,4)} mol; n(O₂) = 0,20 × ${f2(n,4)} = ${f2(n*.2,5)} mol = <b>${f2(n*.2*32,3)} g de O₂</b> (M = 32 g/mol).</div>`};
+function altRows(){
+  const T=TK(),o=h=>.2*atmAlt(h)/(R*T),b=o(0);
+  return[["Nivel del mar",0],["Cali",1018],["Armenia",1480],["Bogotá",2640],["Cusco",3400],["La Paz",3640],["Everest",8849]].map(([n,h])=>`<tr><td>${n}</td><td>${h}</td><td>${f2(atmAlt(h))}</td><td>${f2(o(h),5)}</td><td>${f2(o(h)/b*100,0)} %</td></tr>`).join("");
+}
+function calc(){
+  $("#gcal").innerHTML=`<p class="small">Condiciones: T = ${S.T} °C (${f2(TK(),1)} K) · P ≈ ${f2(Pat())} atm (${S.alt} m) · R = 0,082 atm·L/(mol·K) · el aire inspirado tiene 20 % de O₂.</p><h3>Análisis 1 y 2 · Moles de aire y oxígeno respirado</h3><div class="scroll">${tbl()}</div>${q3()}
+<h3>Objetivo 2 · El oxígeno a diferentes alturas</h3><p class="small">Con la misma temperatura, la presión baja con la altura, así que cada litro de aire contiene menos moles de O₂.</p>
+<label class="rg">Altura explorada: <b id="gaO"></b><input type="range" id="gA" min="0" max="8849" step="10" value="${ea}"></label><p id="gaR" class="regla"></p>
+<div class="scroll"><table><tr><th>Lugar</th><th>Altura (m)</th><th>P (atm)</th><th>mol de O₂ por litro</th><th>Respecto al mar</th></tr>${altRows()}</table></div>`;
+  const up=()=>{const T=TK(),o=h=>.2*atmAlt(h)/(R*T);$("#gaO").textContent=ea+" m";$("#gaR").textContent=`A ${ea} m: P ≈ ${f2(atmAlt(ea))} atm; 1 L de aire contiene ${f2(o(ea),5)} mol de O₂, el ${f2(o(ea)/o(0)*100,0)} % del que hay al nivel del mar.`};
+  $("#gA").oninput=e=>{ea=+e.target.value;up()};up();
+}
+function charts(){
+  const ds=S.d.filter(done);
+  if(!ds.length){$("#gch").innerHTML=`<p class="hint">Mide al menos un integrante para ver las gráficas.</p>`;return}
+  const ser=f=>ds.map((d,i)=>({n:d.n,c:COL[i%6],p:[0,1,2,3,4,5].map(t=>[t,f(d,t)])}));
+  $("#gch").innerHTML=`<div class="chart">${gr().join("")}</div>`;
+}
+const gr=()=>{const ds=S.d.filter(done),ser=f=>ds.map((d,i)=>({n:d.n,c:COL[i%6],p:[0,1,2,3,4,5].map(t=>[t,f(d,t)])}));
+  return[chartSVG({t:"A · Volumen desplazado vs integrantes",xl:"Integrante",yl:"Volumen (L)",bars:ds.map(d=>[d.n,d.V])}),
+   chartSVG({t:"B · Tiempo vs número de exhalaciones",xl:"Tiempo (min)",yl:"Exhalaciones",xmax:5,series:ser((d,t)=>d.r*t)}),
+   chartSVG({t:"C · Tiempo vs cantidad de oxígeno respirado",xl:"Tiempo (min)",yl:"O₂ respirado (L)",xmax:5,series:ser((d,t)=>d.V*d.r*.2*t)})]};
+LB.tabs("gas","g-",t=>{if(t=="calc")calc();if(t=="gra")charts()});
+$("#gpr").onclick=()=>LB.print("gas",()=>{
+  LB.report("gas","Los gases cumplen una función vital","Química grado 10 · Laboratorio",[
+   {h:"Datos y cálculos",html:`<p class="obj"><b>Objetivo:</b> medir el aire que respiramos y determinar el oxígeno que consumimos por minuto y a diferentes alturas.</p><p class="nota">Condiciones: T = ${S.T} °C, P ≈ ${f2(Pat())} atm (${S.alt} m).</p>${tbl()}${q3()}`},
+   {h:"Gráficas",html:gr().join("")},
+   {h:"Conclusiones",qa:LB.qa("#g-con")}]);
+});
+window.gasReset=()=>{
+  if(!confirm("¿Borrar las mediciones, las gráficas y las conclusiones de este laboratorio?"))return;
+  S.d.forEach((d,i)=>{d.V=d.r=null;d.n=PR[i][0]});S.alt=1480;S.T=24;ea=1480;save();LB.clear("gas",IDS);
+  $("#gT").value=24;$("#gCity").value=1480;sel=0;step=0;tmp=null;busy=false;env();draw();log();calc();charts();
+};
+env();draw();log();
+})();

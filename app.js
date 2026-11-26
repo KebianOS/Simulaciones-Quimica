@@ -10,33 +10,41 @@ $$("[data-reset]").forEach(b=>b.onclick=()=>b.closest("#nom")?nomReset():labRese
 
 /* ===== SIM 1: Nomenclatura ===== */
 const C=[["Na","+1","sodio"],["K","+1","potasio"],["Li","+1","litio"],["Ag","+1","plata"],["NH4","+1","amonio"],["Mg","+2","magnesio"],["Ca","+2","calcio"],["Ba","+2","bario"],["Zn","+2","zinc"],["Al","+3","aluminio"],
-["Fe","+2","ferroso"],["Fe","+3","férrico"],["Cu","+1","cuproso"],["Cu","+2","cúprico"],["Hg","+1","mercuroso"],["Hg","+2","mercúrico"],["Sn","+2","estannoso"],["Sn","+4","estánnico"],["Pb","+2","plumboso"],["Pb","+4","plúmbico"],["Au","+1","auroso"],["Au","+3","áurico"],["Co","+2","cobaltoso"],["Co","+3","cobáltico"],["Ni","+2","niqueloso"],["Ni","+3","niquélico"]];
-const A=[["F","-1","fluoruro"],["Cl","-1","cloruro"],["Br","-1","bromuro"],["I","-1","yoduro"],["O","-2","óxido"],["S","-2","sulfuro"],["OH","-1","hidróxido"],
-["(ClO)","-1","hipoclorito"],["(ClO2)","-1","clorito"],["(ClO3)","-1","clorato"],["(ClO4)","-1","perclorato"],["(IO3)","-1","yodato"],["(IO4)","-1","peryodato"],["(NO2)","-1","nitrito"],["(NO3)","-1","nitrato"],["(SO3)","-2","sulfito"],["(SO4)","-2","sulfato"],["(CO3)","-2","carbonato"],["(PO4)","-3","fosfato"],["(MnO4)","-1","permanganato"],["(CrO4)","-2","cromato"],["(Cr2O7)","-2","dicromato"]];
-const LV=[C.slice(0,10),C.slice(10),A.slice(0,7),A.slice(7)];
+["Fe","+2","ferroso"],["Fe","+3","férrico"],["Cu","+1","cuproso"],["Cu","+2","cúprico"],["Hg","+1","mercuroso"],["Hg","+2","mercúrico"],["Sn","+2","estannoso"],["Sn","+4","estánnico"],["Pb","+2","plumboso"],["Pb","+4","plúmbico"],["Au","+1","auroso"],["Au","+3","áurico"],["Co","+2","cobaltoso"],["Co","+3","cobáltico"],["Ni","+2","niqueloso"],["Ni","+3","niquélico"],["Mn","+2","manganoso"],["Mn","+3","mangánico"],["Cr","+2","cromoso"],["Cr","+3","crómico"]];
+const A=[["F","-1","fluoruro"],["Cl","-1","cloruro"],["Br","-1","bromuro"],["I","-1","yoduro"],["S","-2","sulfuro"],["CN","-1","cianuro"],
+["(ClO)","-1","hipoclorito"],["(ClO2)","-1","clorito"],["(ClO3)","-1","clorato"],["(ClO4)","-1","perclorato"],
+["(BrO)","-1","hipobromito"],["(BrO2)","-1","bromito"],["(BrO3)","-1","bromato"],["(BrO4)","-1","perbromato"],
+["(IO)","-1","hipoyodito"],["(IO2)","-1","yodito"],["(IO3)","-1","yodato"],["(IO4)","-1","peryodato"],
+["(NO2)","-1","nitrito"],["(NO3)","-1","nitrato"],["(SO3)","-2","sulfito"],["(SO4)","-2","sulfato"],
+["(CO3)","-2","carbonato"],["(PO3)","-3","fosfito"],["(PO4)","-3","fosfato"],["(BO3)","-3","borato"],["(SiO3)","-2","silicato"],
+["(MnO4)","-1","permanganato"],["(CrO4)","-2","cromato"],["(Cr2O7)","-2","dicromato"],["(C2H3O2)","-1","acetato"]];
+const LV=[C.slice(0,10),C.slice(10),A.slice(0,6),A.slice(6),[...C,...A]];
 const REG=["Un catión con una sola valencia lleva el nombre del elemento: Na⁺ → sodio.",
 "Si el elemento tiene dos valencias, la menor termina en -oso y la mayor en -ico: Fe⁺² → ferroso, Fe⁺³ → férrico.",
-"Los aniones sin oxígeno terminan en -uro: Cl⁻ → cloruro. O⁻² es óxido y OH⁻ es hidróxido.",
-"Oxianiones: hipo-…-ito (menos oxígeno), -ito, -ato y per-…-ato (más oxígeno). (ClO)⁻ hipoclorito → (ClO₄)⁻ perclorato."];
+"Los aniones de ácidos sin oxígeno (hidrácidos) terminan en -uro: Cl⁻ → cloruro, S⁻² → sulfuro, CN⁻ → cianuro.",
+"Oxianiones: hipo-…-ito (menos oxígeno), -ito, -ato y per-…-ato (más oxígeno). (ClO)⁻ hipoclorito → (ClO₄)⁻ perclorato.",
+"Mezcla de todo: cationes de una o varias valencias y aniones de ácidos. Aplica las reglas de los niveles anteriores."];
 const fmt=d=>d[0].replace(/(\d+)/g,"<sub>$1</sub>")+"<sup>"+d[1].replace("-","−")+"</sup>";
-let nSel=null,aciertos=0,fallos=0,nivel=0,rondas=0;
+const AC=window.AudioContext||window.webkitAudioContext;let ac;
+function beep(f,d){if(!$("#snd").checked||!AC)return;try{ac=ac||new AC();const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(_){}}
+let nSel=null,aciertos=0,fallos=0,nivel=0,rondas=0,pistas=0;
 
 function nomRonda(){
   nivel=+$("input[name=niv]:checked").value;
   const ps=shuf(LV[nivel]).slice(0,6);
-  $("#rows").innerHTML=ps.map((d,i)=>`<div class="row"><div class="ion ${d[1][0]=="-"?"a":""}">${fmt(d)}</div><div class="slot" data-n="${d[2]}" data-i="${i}">?</div></div>`).join("");
-  $("#tray").innerHTML=shuf(ps).map(d=>`<div class="tok" data-n="${d[2]}">${d[2]}</div>`).join("");
-  $("#regla").textContent=REG[nivel];$("#nmsg").textContent="";nSel=null;aciertos=0;fallos=0;nScore();
+  $("#rows").innerHTML=ps.map((d,i)=>`<div class="row"><div class="ion ${d[1][0]=="-"?"a":""}">${fmt(d)}</div><div class="slot" tabindex="0" data-n="${d[2]}" data-i="${i}">?</div></div>`).join("");
+  $("#tray").innerHTML=shuf(ps).map(d=>`<div class="tok" tabindex="0" role="button" data-n="${d[2]}">${d[2]}</div>`).join("");
+  $("#regla").textContent=REG[nivel];$("#nmsg").textContent="";nSel=null;aciertos=0;fallos=0;pistas=0;nScore();
 }
-function nScore(){$("#score").innerHTML=`Aciertos: ${aciertos}/6<br>Errores: ${fallos}<br>Rondas completas: ${rondas}`}
+function nScore(){$("#score").innerHTML=`Aciertos: ${aciertos}/6<br>Errores: ${fallos}<br>Pistas: ${pistas}<br>Rondas completas: ${rondas}`}
 function intentar(tok,slot){
   if(!slot||slot.classList.contains("ok")){return false}
   if(tok.dataset.n==slot.dataset.n){
-    slot.textContent=tok.dataset.n;slot.classList.add("ok");tok.remove();aciertos++;
-    if(aciertos==6){rondas++;$("#nmsg").textContent=`¡Muy bien! Completaste la ronda con ${fallos} error${fallos==1?"":"es"}. 🎉`}
+    slot.textContent=tok.dataset.n;slot.classList.add("ok");tok.remove();aciertos++;beep(660,.12);
+    if(aciertos==6){rondas++;beep(880,.35);const st=fallos==0&&pistas==0?"⭐⭐⭐":fallos<=2?"⭐⭐":"⭐";$("#nmsg").textContent=`¡Muy bien! ${st} Terminaste con ${fallos} error${fallos==1?"":"es"}. 🎉`}
     nScore();return true;
   }
-  fallos++;nScore();tok.classList.add("bad");tok.style.transform="";setTimeout(()=>tok.classList.remove("bad"),450);return false;
+  fallos++;beep(180,.25);nScore();tok.classList.add("bad");tok.style.transform="";setTimeout(()=>tok.classList.remove("bad"),450);return false;
 }
 let drag=null;
 $("#tray").addEventListener("pointerdown",e=>{
@@ -65,7 +73,7 @@ $("#rows").addEventListener("click",e=>{
 });
 $("#otra").onclick=nomRonda;
 $$("input[name=niv]").forEach(r=>r.onchange=()=>{rondas=0;nomRonda()});
-function nomReset(){rondas=0;$("input[name=niv][value='0']").checked=true;nomRonda()}
+function nomReset(){vista("juego");rondas=0;$("input[name=niv][value='0']").checked=true;nomRonda()}
 nomRonda();
 
 /* ===== SIM 2: Laboratorio ===== */
@@ -126,18 +134,66 @@ $$(".senses button").forEach(b=>b.onclick=()=>{
   $("#bubble").innerHTML=`<b>${IT[cur].n}</b> · ${b.dataset.s}<br>`+idx.map(c=>`${PROPS[c].replace("*","")}: ${IT[cur].d[c]}`).join("<br>");
   const g=$("#big");g.classList.remove("pulse");void g.offsetWidth;g.classList.add("pulse");pintar();
 });
-$$(".tabs button").forEach(b=>b.onclick=()=>{
-  $$(".tabs button").forEach(x=>x.classList.toggle("on",x==b));
+$$("#lab .tabs button").forEach(b=>b.onclick=()=>{
+  $$("#lab .tabs button").forEach(x=>x.classList.toggle("on",x==b));
   ["bench","tabla","quiz"].forEach(t=>$("#s-"+t).hidden=t!=b.dataset.t);
 });
-$("#imprimir").onclick=()=>{document.body.classList.add("printing");print()};
-window.onafterprint=()=>document.body.classList.remove("printing");
+function armarInforme(){
+  const inf=$("#informe");inf.innerHTML="";
+  const pag=()=>{const d=document.createElement("div");d.className="hoja";inf.appendChild(d);return d};
+  const esc=s=>String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+  const nombre=$("#nombre").value.trim()||"______________________________";
+  const f=$("#fecha").value?$("#fecha").value.split("-").reverse().join("/"):new Date().toLocaleDateString("es-CO");
+  pag().innerHTML=`<div class="portada"><p class="inst">INSTITUCIÓN EDUCATIVA LOS QUINDOS</p><h1>Laboratorio de propiedades organolépticas</h1><p class="sub">Química · Grado 7 · Primer periodo</p><div class="datos"><p><b>Estudiante:</b> ${esc(nombre)}</p><p><b>Fecha:</b> ${f}</p><p><b>Docente:</b> Olga Liliana Salinas Casallas</p></div></div>`;
+  pag().innerHTML=`<h2>Tabla de resultados</h2><p class="obj"><b>Objetivo:</b> determinar las propiedades organolépticas de diferentes sustancias de uso cotidiano.</p><table><tr><th>Sustancia</th>${PROPS.map(p=>`<th>${p}</th>`).join("")}</tr>${IT.map((it,r)=>`<tr><td>${it.n}</td>${PROPS.map((_,c)=>`<td>${obs[r+"_"+c]?esc(it.d[c]):""}</td>`).join("")}</tr>`).join("")}</table><p class="nota">* Sensación al tacto: la reacción que se siente al tocar, oler o probar una sustancia.</p>`;
+  let p=pag();p.innerHTML="<h2>Cuestionario</h2>";
+  QS.forEach((q,i)=>{
+    const b=document.createElement("div");b.className="qa";
+    b.innerHTML=`<b>${i+1}. ${q}</b><div class="ans"></div>`;
+    const a=b.lastChild;a.textContent=document.getElementById("q"+i).value;
+    p.appendChild(b);
+    if(p.scrollHeight>p.clientHeight+1){p.removeChild(b);p=pag();p.appendChild(b);let fs=11;while(p.scrollHeight>p.clientHeight+1&&fs>6){fs-=.5;a.style.fontSize=fs+"pt"}}
+  });
+  const fotos=[...document.querySelectorAll("#galeria img")].map(i=>i.src),np=Math.max(1,Math.ceil(fotos.length/6));
+  for(let k=0;k<np;k++)pag().innerHTML=`<h2>Registro fotográfico${np>1?` (${k+1}/${np})`:""}</h2><div class="fg">`+Array.from({length:6},(_,n)=>{const s=fotos[k*6+n];return`<div class="fc2">${s?`<img src="${s}" alt="Foto ${k*6+n+1}">`:""}</div>`}).join("")+`</div>`;
+}
+$("#imprimir").onclick=()=>{
+  if(!$("#nombre").value.trim()){const n=prompt("¿Cuál es tu nombre para la portada?");if(n){$("#nombre").value=n;store.set("lab:nombre",n)}}
+  armarInforme();setTimeout(()=>print(),300);
+};
+window.onafterprint=()=>{$("#informe").innerHTML=""};
 function labReset(){
   if(!confirm("¿Borrar observaciones, tabla y respuestas del laboratorio?"))return;
   obs={};cur=null;store.del("lab:obs");
   ["nombre","fecha",...QS.map((_,i)=>"q"+i)].forEach(id=>{document.getElementById(id).value="";store.del("lab:"+id)});
   $$(".item").forEach(x=>x.classList.remove("on"));
   $("#big").innerHTML='<span class="empty">Elige una sustancia</span>';
-  $("#bubble").textContent="Aquí aparecerá lo que percibas.";pintar();
+  $("#bubble").textContent="Aquí aparecerá lo que percibas.";$("#galeria").innerHTML="";pintar();
 }
 pintar();
+
+
+/* Teclado, pista y explorar (nomenclatura) */
+$("#tray").addEventListener("keydown",e=>{const t=e.target.closest(".tok");if(t&&(e.key=="Enter"||e.key==" ")){e.preventDefault();if(nSel)nSel.classList.remove("sel");nSel=nSel===t?null:t;if(nSel)t.classList.add("sel")}});
+$("#rows").addEventListener("keydown",e=>{const s=e.target.closest(".slot");if(s&&nSel&&(e.key=="Enter"||e.key==" ")){e.preventDefault();const t=nSel;nSel=null;t.classList.remove("sel");intentar(t,s)}});
+$("#pista").onclick=()=>{const s=$$(".slot:not(.ok)")[0];if(!s)return;const t=$$(".tok").find(x=>x.dataset.n==s.dataset.n);if(!t)return;pistas++;nScore();t.classList.add("hint");s.classList.add("hot");setTimeout(()=>{t.classList.remove("hint");s.classList.remove("hot")},1800)};
+function vista(v){$("#juegoV").hidden=v!="juego";$("#exploraV").hidden=v!="explora";$$("#nomTabs button").forEach(b=>b.classList.toggle("on",b.dataset.v==v));$("#nom .panel").classList.toggle("dim",v=="explora")}
+$$("#nomTabs button").forEach(b=>b.onclick=()=>vista(b.dataset.v));
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const TODOS=[...C.map(d=>[...d,"c"]),...A.map(d=>[...d,"a"])];
+const cara=(d,r)=>r?`<span class="nmv">${d[2]}<small>${d[3]=="c"?"catión":"anión"}</small></span>`:`<span class="ion ${d[3]=="a"?"a":""}">${fmt(d)}</span>`;
+let filtro="t",abiertos=false;
+function cards(){
+  const q=norm($("#buscar").value.trim());
+  $("#cards").innerHTML=TODOS.map((d,i)=>[d,i]).filter(([d])=>(filtro=="t"||d[3]==filtro)&&(!q||norm(d[2]).includes(q)||norm(d[0]).includes(q)))
+    .map(([d,i])=>`<button class="fc${abiertos?" rev":""}" data-i="${i}">${cara(d,abiertos)}</button>`).join("")||'<p class="small">No hay iones con esa búsqueda.</p>';
+}
+$("#cards").onclick=e=>{const b=e.target.closest(".fc");if(!b)return;const r=!b.classList.contains("rev");b.classList.toggle("rev",r);b.innerHTML=cara(TODOS[+b.dataset.i],r)};
+$("#buscar").oninput=cards;
+$$("#exploraV .seg button").forEach(b=>b.onclick=()=>{filtro=b.dataset.f;$$("#exploraV .seg button").forEach(x=>x.classList.toggle("on",x==b));cards()});
+$("#voltear").onclick=()=>{abiertos=!abiertos;$("#voltear").textContent=abiertos?"Ocultar nombres":"Mostrar todos los nombres";cards()};
+cards();
+
+/* Registro fotográfico y correo (laboratorio) */
+$("#fotos").onchange=e=>{[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.src=r.result;im.alt="Registro fotográfico";im.title="Toca para quitar";im.onclick=()=>im.remove();$("#galeria").appendChild(im)};r.readAsDataURL(f)});e.target.value=""};
+$("#correo").href="mailto:olga.salinas@ielosquindos.edu.co?subject="+encodeURIComponent("Informe laboratorio propiedades organolépticas - Grado 7");

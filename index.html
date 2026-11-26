@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E⚗️%3C/text%3E%3C/svg%3E">
 <title>Simulaciones de Química · I.E. Los Quindos</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -21,16 +22,30 @@
       <strong>Propiedades organolépticas</strong><small>Grado 7 · Laboratorio virtual</small>
     </button>
   </div>
+  <p class="foot">Basado en las guías de Química de Olga Liliana Salinas Casallas · Química I, Grupo Editorial Educar</p>
 </div>
 
 <!-- SIM 1 -->
 <div id="nom" class="sim" hidden>
   <div class="stage">
     <div class="main">
-      <h2>Arrastra cada nombre hasta su ion</h2>
-      <div id="rows" class="rows"></div>
-      <div id="tray" class="tray"></div>
-      <p id="nmsg" class="msg" aria-live="polite"></p>
+      <div class="tabs" id="nomTabs"><button data-v="juego" class="on">Juego</button><button data-v="explora">Explorar iones</button></div>
+      <div id="juegoV">
+        <h2>Arrastra cada nombre hasta su ion</h2>
+        <div id="rows" class="rows"></div>
+        <div id="tray" class="tray"></div>
+        <p id="nmsg" class="msg" aria-live="polite"></p>
+      </div>
+      <div id="exploraV" hidden>
+        <h2>Explora todos los iones</h2>
+        <p class="small">Toca una ficha para ver su nombre en la nomenclatura tradicional. Cada valencia tiene su propia ficha.</p>
+        <div class="bar2">
+          <div class="tabs seg"><button data-f="t" class="on">Todos</button><button data-f="c">Cationes</button><button data-f="a">Aniones</button></div>
+          <input id="buscar" type="search" placeholder="Buscar ion o nombre" aria-label="Buscar">
+          <button id="voltear" class="btn2">Mostrar todos los nombres</button>
+        </div>
+        <div id="cards" class="cards"></div>
+      </div>
     </div>
     <aside class="panel">
       <h3>Nivel</h3>
@@ -38,12 +53,14 @@
       <label><input type="radio" name="niv" value="1"> 2 · Cationes con varias valencias</label>
       <label><input type="radio" name="niv" value="2"> 3 · Aniones simples</label>
       <label><input type="radio" name="niv" value="3"> 4 · Oxianiones</label>
+      <label><input type="radio" name="niv" value="4"> 5 · Mezcla de todo</label>
       <hr>
       <div id="score" class="score"></div>
       <hr>
       <h3>Regla</h3>
       <p id="regla" class="regla"></p>
-      <button id="otra">Nueva ronda</button>
+      <button id="otra">Nueva ronda</button> <button id="pista">💡 Pista</button>
+      <label class="small"><input type="checkbox" id="snd" checked> Sonidos</label>
     </aside>
   </div>
   <nav class="bar"><button data-home>🏠 Inicio</button><span>Nomenclatura inorgánica</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
@@ -53,7 +70,7 @@
 <div id="lab" class="sim" hidden>
   <div class="stage">
     <div class="main">
-      <div class="tabs">
+      <div class="tabs" id="labTabs">
         <button data-t="bench" class="on">Laboratorio</button>
         <button data-t="tabla">Tabla</button>
         <button data-t="quiz">Cuestionario</button>
@@ -75,10 +92,6 @@
       </section>
 
       <section class="scr" id="s-tabla" hidden>
-        <div class="print-cover">
-          <h1>Laboratorio de propiedades organolépticas</h1>
-          <p>I.E. Los Quindos · Química · Grado 7 · Primer periodo</p>
-        </div>
         <div class="ident">
           <label>Nombre <input id="nombre"></label>
           <label>Fecha <input id="fecha" type="date"></label>
@@ -89,8 +102,12 @@
 
       <section class="scr" id="s-quiz" hidden>
         <div id="preguntas"></div>
+        <h3>Registro fotográfico</h3>
+        <p class="small noprint">Agrega las fotos de tu experimento. No se guardan al cerrar la página: imprime o guarda el PDF antes. Toca una foto para quitarla.</p>
+        <input id="fotos" class="noprint" type="file" accept="image/*" multiple>
+        <div id="galeria" class="gal"></div>
         <p class="note">Entrega: informe con portada, tabla diligenciada, respuestas y registro fotográfico, al correo olga.salinas@ielosquindos.edu.co en la fecha indicada.</p>
-        <button id="imprimir">🖨️ Imprimir informe / guardar PDF</button>
+        <div class="noprint"><button id="imprimir">🖨️ Imprimir informe / guardar PDF</button> <a id="correo" class="btn2" href="#">✉️ Abrir correo para la profesora</a></div>
       </section>
     </div>
 
@@ -98,6 +115,8 @@
       <h3>Objetivo</h3>
       <p>Determinar las propiedades organolépticas de sustancias de uso cotidiano.</p>
       <p class="small">Son propiedades físicas que se perciben con los sentidos: color y forma (vista), olor (olfato), textura (tacto) y sabor (gusto).</p>
+      <details><summary>Materiales</summary><p class="small">Un tomate pelado y uno sin pelar · una papa pelada y una sin pelar · una naranja pelada y una sin pelar · un limón entero y uno partido · un trozo de pan.</p></details>
+      <details><summary>Procedimiento</summary><p class="small">Coloca cada material sobre una superficie limpia, observa con los sentidos y completa la tabla. Luego responde el cuestionario y arma tu informe.</p></details>
       <hr>
       <h3>Progreso</h3>
       <div class="bar-prog"><i id="prog"></i></div>
@@ -109,6 +128,7 @@
   <nav class="bar"><button data-home>🏠 Inicio</button><span>Propiedades organolépticas</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
 </div>
 
+<div id="informe" aria-hidden="true"></div>
 <script src="app.js"></script>
 </body>
 </html>

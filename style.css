@@ -19,7 +19,7 @@ button{font:inherit;cursor:pointer}
 .tile small{color:#556}
 
 /* Estructura de simulación */
-.sim{display:flex;flex-direction:column;height:100vh}
+.sim{display:flex;flex-direction:column;height:100vh;height:100dvh}
 .stage{flex:1;min-height:0;display:flex;background:linear-gradient(#cfe8f8,#f1f8fd)}
 .main{flex:1;min-width:0;overflow:auto;padding:1rem 1.2rem}
 .panel{width:290px;overflow:auto;margin:.8rem .8rem .8rem 0;background:#fffdf4;border:2px solid #999;border-radius:10px;padding:.8rem 1rem}
@@ -96,7 +96,11 @@ td.q{color:#aab;text-align:center}
  .stage{flex-direction:column;overflow:auto}
  .panel{width:auto;margin:0 .8rem .8rem;overflow:visible}
  .main{overflow:visible}
- .plate{grid-template-columns:1fr;justify-items:center}
+ .plate{grid-template-columns:1fr;justify-items:center;margin-top:.6rem}
+ .big{width:130px;height:130px}.big svg{width:96px;height:96px}
+ .item svg{height:52px}.item{font-size:.72rem}
+ .main{padding:.7rem}
+ #tray{position:sticky;bottom:0;z-index:5;background:#eaf5fc;box-shadow:0 -6px 10px #0002}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .fc{height:90px;background:#fff;border:2px solid #9ab;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:.2rem}

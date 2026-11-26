@@ -107,7 +107,7 @@ $("#shelf").innerHTML=IT.map((it,i)=>`<button class="item" data-i="${i}">${art(i
 $("#tabla").innerHTML="<tr><th>Sustancia</th>"+PROPS.map(p=>`<th>${p}</th>`).join("")+"</tr>"+IT.map((it,r)=>`<tr><td>${it.n}</td>`+PROPS.map((_,c)=>`<td data-k="${r}_${c}"></td>`).join("")+"</tr>").join("");
 const QS=["¿Por qué crees que las sustancias presentan diferentes texturas?","¿Qué diferencias hay entre las sustancias sin pelar y peladas?","¿Qué importancia tiene para la química el análisis organoléptico de las sustancias?","¿Qué importancia química tienen las cáscaras de las frutas, vegetales y tubérculos?","¿Cómo se debe reciclar la materia orgánica que sale del procesamiento de los alimentos en la cocina?","¿Qué aprendiste de esta experiencia? ¿Qué podrías concluir de ella?"];
 $("#preguntas").innerHTML=QS.map((q,i)=>`<div class="q2"><label for="q${i}">${i+1}. ${q}</label><textarea id="q${i}"></textarea></div>`).join("");
-["nombre","fecha",...QS.map((_,i)=>"q"+i)].forEach(id=>{
+["nombre","grado","fecha",...QS.map((_,i)=>"q"+i)].forEach(id=>{
   const e=document.getElementById(id),v=store.get("lab:"+id);if(v)e.value=v;
   e.addEventListener("input",()=>store.set("lab:"+id,e.value));
 });
@@ -143,8 +143,9 @@ function armarInforme(){
   const pag=()=>{const d=document.createElement("div");d.className="hoja";inf.appendChild(d);return d};
   const esc=s=>String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
   const nombre=$("#nombre").value.trim()||"______________________________";
+  const grado=$("#grado").value.trim()||"__________";
   const f=$("#fecha").value?$("#fecha").value.split("-").reverse().join("/"):new Date().toLocaleDateString("es-CO");
-  pag().innerHTML=`<div class="portada"><p class="inst">INSTITUCIÓN EDUCATIVA LOS QUINDOS</p><h1>Laboratorio de propiedades organolépticas</h1><p class="sub">Química · Grado 7 · Primer periodo</p><div class="datos"><p><b>Estudiante:</b> ${esc(nombre)}</p><p><b>Fecha:</b> ${f}</p><p><b>Docente:</b> Olga Liliana Salinas Casallas</p></div></div>`;
+  pag().innerHTML=`<div class="portada"><p class="inst">INSTITUCIÓN EDUCATIVA LOS QUINDOS</p><h1>Laboratorio de propiedades organolépticas</h1><p class="sub">Química · Primer periodo</p><div class="datos"><p><b>Estudiante:</b> ${esc(nombre)}</p><p><b>Grado:</b> ${esc(grado)}</p><p><b>Fecha:</b> ${f}</p><p><b>Docente:</b> Olga Liliana Salinas Casallas</p></div></div>`;
   pag().innerHTML=`<h2>Tabla de resultados</h2><p class="obj"><b>Objetivo:</b> determinar las propiedades organolépticas de diferentes sustancias de uso cotidiano.</p><table><tr><th>Sustancia</th>${PROPS.map(p=>`<th>${p}</th>`).join("")}</tr>${IT.map((it,r)=>`<tr><td>${it.n}</td>${PROPS.map((_,c)=>`<td>${obs[r+"_"+c]?esc(it.d[c]):""}</td>`).join("")}</tr>`).join("")}</table><p class="nota">* Sensación al tacto: la reacción que se siente al tocar, oler o probar una sustancia.</p>`;
   let p=pag();p.innerHTML="<h2>Cuestionario</h2>";
   QS.forEach((q,i)=>{
@@ -154,21 +155,20 @@ function armarInforme(){
     p.appendChild(b);
     if(p.scrollHeight>p.clientHeight+1){p.removeChild(b);p=pag();p.appendChild(b);let fs=11;while(p.scrollHeight>p.clientHeight+1&&fs>6){fs-=.5;a.style.fontSize=fs+"pt"}}
   });
-  const fotos=[...document.querySelectorAll("#galeria img")].map(i=>i.src),np=Math.max(1,Math.ceil(fotos.length/6));
-  for(let k=0;k<np;k++)pag().innerHTML=`<h2>Registro fotográfico${np>1?` (${k+1}/${np})`:""}</h2><div class="fg">`+Array.from({length:6},(_,n)=>{const s=fotos[k*6+n];return`<div class="fc2">${s?`<img src="${s}" alt="Foto ${k*6+n+1}">`:""}</div>`}).join("")+`</div>`;
 }
 $("#imprimir").onclick=()=>{
   if(!$("#nombre").value.trim()){const n=prompt("¿Cuál es tu nombre para la portada?");if(n){$("#nombre").value=n;store.set("lab:nombre",n)}}
+  if(!$("#grado").value.trim()){const g=prompt("¿Cuál es tu grado para la portada? Ej: 7 A");if(g){$("#grado").value=g;store.set("lab:grado",g)}}
   armarInforme();setTimeout(()=>print(),300);
 };
 window.onafterprint=()=>{$("#informe").innerHTML=""};
 function labReset(){
   if(!confirm("¿Borrar observaciones, tabla y respuestas del laboratorio?"))return;
   obs={};cur=null;store.del("lab:obs");
-  ["nombre","fecha",...QS.map((_,i)=>"q"+i)].forEach(id=>{document.getElementById(id).value="";store.del("lab:"+id)});
+  ["nombre","grado","fecha",...QS.map((_,i)=>"q"+i)].forEach(id=>{document.getElementById(id).value="";store.del("lab:"+id)});
   $$(".item").forEach(x=>x.classList.remove("on"));
   $("#big").innerHTML='<span class="empty">Elige una sustancia</span>';
-  $("#bubble").textContent="Aquí aparecerá lo que percibas.";$("#galeria").innerHTML="";pintar();
+  $("#bubble").textContent="Aquí aparecerá lo que percibas.";pintar();
 }
 pintar();
 
@@ -194,6 +194,5 @@ $$("#exploraV .seg button").forEach(b=>b.onclick=()=>{filtro=b.dataset.f;$$("#ex
 $("#voltear").onclick=()=>{abiertos=!abiertos;$("#voltear").textContent=abiertos?"Ocultar nombres":"Mostrar todos los nombres";cards()};
 cards();
 
-/* Registro fotográfico y correo (laboratorio) */
-$("#fotos").onchange=e=>{[...e.target.files].forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.src=r.result;im.alt="Registro fotográfico";im.title="Toca para quitar";im.onclick=()=>im.remove();$("#galeria").appendChild(im)};r.readAsDataURL(f)});e.target.value=""};
+/* Correo */
 $("#correo").href="mailto:olga.salinas@ielosquindos.edu.co?subject="+encodeURIComponent("Informe laboratorio propiedades organolépticas - Grado 7");

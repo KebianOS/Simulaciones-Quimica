@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulaciones de Química · I.E. Los Quindos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="home">
+  <h1>Simulaciones de Química</h1>
+  <p>Institución Educativa Los Quindos · Profesora Olga Liliana Salinas Casallas</p>
+  <div class="tiles">
+    <button class="tile" data-go="nom">
+      <span class="ico"><b class="i c">Fe<sup>+2</sup></b><b class="i n">ferroso</b></span>
+      <strong>Nomenclatura inorgánica</strong><small>Grados 10 A y B · Juego de apareamiento</small>
+    </button>
+    <button class="tile" data-go="lab">
+      <span class="ico big">🍅🍊👁️</span>
+      <strong>Propiedades organolépticas</strong><small>Grado 7 · Laboratorio virtual</small>
+    </button>
+  </div>
+</div>
+
+<!-- SIM 1 -->
+<div id="nom" class="sim" hidden>
+  <div class="stage">
+    <div class="main">
+      <h2>Arrastra cada nombre hasta su ion</h2>
+      <div id="rows" class="rows"></div>
+      <div id="tray" class="tray"></div>
+      <p id="nmsg" class="msg" aria-live="polite"></p>
+    </div>
+    <aside class="panel">
+      <h3>Nivel</h3>
+      <label><input type="radio" name="niv" value="0" checked> 1 · Cationes de una valencia</label>
+      <label><input type="radio" name="niv" value="1"> 2 · Cationes con varias valencias</label>
+      <label><input type="radio" name="niv" value="2"> 3 · Aniones simples</label>
+      <label><input type="radio" name="niv" value="3"> 4 · Oxianiones</label>
+      <hr>
+      <div id="score" class="score"></div>
+      <hr>
+      <h3>Regla</h3>
+      <p id="regla" class="regla"></p>
+      <button id="otra">Nueva ronda</button>
+    </aside>
+  </div>
+  <nav class="bar"><button data-home>🏠 Inicio</button><span>Nomenclatura inorgánica</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
+</div>
+
+<!-- SIM 2 -->
+<div id="lab" class="sim" hidden>
+  <div class="stage">
+    <div class="main">
+      <div class="tabs">
+        <button data-t="bench" class="on">Laboratorio</button>
+        <button data-t="tabla">Tabla</button>
+        <button data-t="quiz">Cuestionario</button>
+      </div>
+
+      <section class="scr" id="s-bench">
+        <p class="hint">1) Elige una sustancia del mesón. 2) Usa los sentidos para observarla.</p>
+        <div id="shelf" class="shelf"></div>
+        <div class="plate">
+          <div id="big" class="big"><span class="empty">Elige una sustancia</span></div>
+          <div class="senses">
+            <button data-s="vista">👁️<small>Vista</small></button>
+            <button data-s="olfato">👃<small>Olfato</small></button>
+            <button data-s="tacto">✋<small>Tacto</small></button>
+            <button data-s="gusto">👅<small>Gusto</small></button>
+          </div>
+          <div id="bubble" class="bubble">Aquí aparecerá lo que percibas.</div>
+        </div>
+      </section>
+
+      <section class="scr" id="s-tabla" hidden>
+        <div class="print-cover">
+          <h1>Laboratorio de propiedades organolépticas</h1>
+          <p>I.E. Los Quindos · Química · Grado 7 · Primer periodo</p>
+        </div>
+        <div class="ident">
+          <label>Nombre <input id="nombre"></label>
+          <label>Fecha <input id="fecha" type="date"></label>
+        </div>
+        <div class="scroll"><table id="tabla"></table></div>
+        <p class="note">* Sensación al tacto: la reacción que se siente al tocar, oler o probar una sustancia.</p>
+      </section>
+
+      <section class="scr" id="s-quiz" hidden>
+        <div id="preguntas"></div>
+        <p class="note">Entrega: informe con portada, tabla diligenciada, respuestas y registro fotográfico, al correo olga.salinas@ielosquindos.edu.co en la fecha indicada.</p>
+        <button id="imprimir">🖨️ Imprimir informe / guardar PDF</button>
+      </section>
+    </div>
+
+    <aside class="panel">
+      <h3>Objetivo</h3>
+      <p>Determinar las propiedades organolépticas de sustancias de uso cotidiano.</p>
+      <p class="small">Son propiedades físicas que se perciben con los sentidos: color y forma (vista), olor (olfato), textura (tacto) y sabor (gusto).</p>
+      <hr>
+      <h3>Progreso</h3>
+      <div class="bar-prog"><i id="prog"></i></div>
+      <p id="progTxt" class="small"></p>
+      <hr>
+      <p class="warn">⚠️ En un laboratorio real casi no se usan el tacto ni el gusto: las sustancias pueden causar quemaduras o ser tóxicas. Aquí son alimentos y es seguro.</p>
+    </aside>
+  </div>
+  <nav class="bar"><button data-home>🏠 Inicio</button><span>Propiedades organolépticas</span><button class="reset" data-reset>↺ Reiniciar</button></nav>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

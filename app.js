@@ -195,4 +195,4 @@ $("#voltear").onclick=()=>{abiertos=!abiertos;$("#voltear").textContent=abiertos
 cards();
 
 /* Correo */
-$("#correo").href="mailto:olga.salinas@ielosquindos.edu.co?subject="+encodeURIComponent("Informe laboratorio propiedades organolépticas - Grado 7");
+$("#correo").href="mailto:olga.salinas@ielosquindos.edu.co?subject="+encodeURIComponent("Informe laboratorio propiedades organolépticas");
